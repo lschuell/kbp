@@ -157,7 +157,7 @@ def main():
                                       create=args.create_kv, save=args.save_kv, KG=args.kg)
 
     if args.create_lexicon:
-        train_lexicon, test_lexicon = get_lexicon(target_kv, args.src, args.tgt, k=5000)
+        train_lexicon, test_lexicon = get_lexicon(target_kv, args.src, args.tgt, k=768)
         with open("./training-monolingual/lexicon/train_lexicon_" + args.src + "-" + args.tgt, "wb") as train:
             pickle.dump(train_lexicon, train, protocol=pickle.HIGHEST_PROTOCOL)
         with open("./training-monolingual/lexicon/test_lexicon_" + args.src + "-" + args.tgt, "wb") as test:
@@ -169,6 +169,9 @@ def main():
             train_lexicon = pickle.load(train)
         with open("./training-monolingual/lexicon/test_lexicon_" + args.src + "-" + args.tgt, "rb") as test:
             test_lexicon = pickle.load(test)
+
+        if args.sub_lexicon:
+            train_lexicon, test_lexicon = get_sublexicon(train_lexicon, test_lexicon, k=768, test_size=500)
 
         logging.info("Linear projection with Moore-Penrose-Pseudoinverse")
         lp_MPP = LinearProjection(source_kv, target_kv, train_lexicon, test_lexicon, size_src=args.size_src,
@@ -185,7 +188,14 @@ def main():
                                   size_tgt=args.size_tgt, norm_bf=args.norm_bf)
         scores_ORTH = evaluate(lp_ORTH.test_matrix_src, lp_ORTH.test_matrix_tgt, lp_ORTH.W, normalize=True)
 
-        print(scores_MPP, scores_SGD, scores_ORTH)
+
+        print("########################Results############################")
+        print("Algebraic Linear Projection:")
+        print("Top@1:", scores_MPP[0],"Top@5", scores_MPP[1], "Top@10", scores_MPP[2])
+        print("SGD Linear Projection:")
+        print("Top@1:", scores_SGD[0], "Top@5", scores_SGD[1], "Top@10", scores_SGD[2])
+        print("Orthogonal Projection:")
+        print("Top@1:", scores_ORTH[0], "Top@5", scores_ORTH[1], "Top@10", scores_ORTH[2])
 
 
 if __name__ == '__main__':
@@ -193,10 +203,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Word Translations",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument("--src", default="de", help="Source language")
-    parser.add_argument("--tgt", default="fr", help="Target language")
-    parser.add_argument("--size_src", default=300, type=int, help="Dimension of source embedding")
-    parser.add_argument("--size_tgt", default=300, type=int, help="Dimension of target embedding")
+    parser.add_argument("--src", default="en", help="Source language")
+    parser.add_argument("--tgt", default="es", help="Target language")
+    parser.add_argument("--size_src", default=200, type=int, help="Dimension of source embedding")
+    parser.add_argument("--size_tgt", default=200, type=int, help="Dimension of target embedding")
     parser.add_argument("--ws", default=10, type=int, help="Window size for learning of keyed vectors")
 
     parser.add_argument("--create_pre", default=False, type=bool, help="Create preprocessed files")
@@ -207,7 +217,8 @@ if __name__ == '__main__':
                         help="Save keyed vectors when reuse_kv=False (new creation)")
     parser.add_argument("--norm_bf", default=False, type=bool, help="Normalize embeddings before projection")
     parser.add_argument("--kg", default=False, type=bool, help="Whether to apply on knowledge graph")
-    parser.add_argument("--create_lexicon", default=False, type=bool, help="Whether to create language lexicon")
+    parser.add_argument("--create_lexicon", default=True, type=bool, help="Whether to create language lexicon")
+    parser.add_argument("--sub_lexicon", default=False, type=bool, help="Whether to get sublexicon for comparability with KG for languages")
     parser.add_argument("--get_result", default=True, type=bool, help="Whether to launch training/evaluation")
 
     args = parser.parse_args()

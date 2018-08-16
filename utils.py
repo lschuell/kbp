@@ -5,6 +5,7 @@ from gensim.models.word2vec import Text8Corpus
 from gensim.models.phrases import Phrases, Phraser
 from collections import Counter
 from googletrans import Translator
+import random
 import faiss
 from sklearn import preprocessing
 import numpy as np
@@ -81,15 +82,24 @@ def get_lexicon(word_vector_tgt: KeyedVectors, src="en", tgt="es", k=5000):
         except KeyError:
             errors += 1
 
-        if success == k + 1000:
+        if success == k + 500:
             break
 
     print("Total errors", errors)
     # get training lexicon for linear projection and test lexicon for evaluation
+
     train_lexicon = lexicon[:k]
     test_lexicon = lexicon[k:]
 
     return train_lexicon, test_lexicon
+
+def get_sublexicon(train_lexicon, test_lexicon, k=2092, test_size=500):
+    '''
+    Get sublexicon with smaller dimensions for comparability with knowledge graph experiments
+    '''
+    random.shuffle(train_lexicon)
+    random.shuffle(test_lexicon)
+    return train_lexicon[:k], test_lexicon[:test_size]
 
  #-------------------------Preprocessing-----------------------------
 

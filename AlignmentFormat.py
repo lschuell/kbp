@@ -6,6 +6,7 @@ import pickle
 from gensim.models import KeyedVectors
 from gensim.test.utils import get_tmpfile
 import os
+import random
 
 
 # a mapping is (source, target, relation, confidence) or a list or anything with is iterable
@@ -220,8 +221,8 @@ def load_kv(src="runescape", tgt="darkscape", size_src=200, size_tgt=200, window
     '''Load source and target keyed vectors of knowledge graph embeddings'''
     abs_path = os.getcwd()
 
-    kv_filename_src = abs_path[:-6] + "/training-monolingual/kv/keyvec_src-{}_dim{}_ws{}.kv".format(src, size_src, window)
-    kv_filename_tgt = abs_path[:-6] + "/training-monolingual/kv/keyvec_tgt-{}_dim{}_ws{}.kv".format(tgt, size_tgt, window)
+    kv_filename_src = abs_path + "/training-monolingual/kv/keyvec_src-{}_dim{}_ws{}.kv".format(src, size_src, window)
+    kv_filename_tgt = abs_path + "/training-monolingual/kv/keyvec_tgt-{}_dim{}_ws{}.kv".format(tgt, size_tgt, window)
     vecfile_src = get_tmpfile(kv_filename_src)
     vecfile_tgt = get_tmpfile(kv_filename_tgt)
 
@@ -231,6 +232,15 @@ def load_kv(src="runescape", tgt="darkscape", size_src=200, size_tgt=200, window
     kv_tgt = KeyedVectors.load(vecfile_tgt, mmap='r')
 
     return kv_src, kv_tgt
+
+def extract_resource(line):
+    start = line.find("<")
+    end = line.find(">")
+    resource = line[start:end + 1]
+    return resource
+
+
+
 
 
 def write_inflated_lexicon(mapping, src="runescape", tgt="darkscape", test_size=500, size_src=200,
@@ -262,19 +272,26 @@ def write_inflated_lexicon(mapping, src="runescape", tgt="darkscape", test_size=
     # inflate lexicon via label match
     sources = []
     targets = []
-    with open("../KGs_for_gold_standard/" + src + "/enwiki-20170801-labels.ttl", 'r') as src_file:
-        for line in src_file:
-            start = line.find("<")
-            end = line.find(">")
-            resource = line[start:end + 1]
-            sources.append(resource)
 
-    with open("../KGs_for_gold_standard/" + tgt + "/enwiki-20170801-labels.ttl", 'r') as tgt_file:
+    # entity labels
+    with open("KGs_for_gold_standard/" + src + "/enwiki-20170801-labels.ttl", 'r') as src_file:
+        for line in src_file:
+            sources.append(extract_resource(line))
+
+    with open("KGs_for_gold_standard/" + tgt + "/enwiki-20170801-labels.ttl", 'r') as tgt_file:
         for line in tgt_file:
-            start = line.find("<")
-            end = line.find(">")
-            resource = line[start:end + 1]
-            targets.append(resource)
+            targets.append(extract_resource(line))
+
+    # property labels
+    with open("KGs_for_gold_standard/" + src + "/enwiki-20170801-infobox-property-definitions.ttl", 'r') as src_file:
+        for line in src_file:
+            sources.append(extract_resource(line))
+
+    with open("KGs_for_gold_standard/" + tgt + "/enwiki-20170801-infobox-property-definitions.ttl", 'r') as tgt_file:
+        for line in tgt_file:
+            targets.append(extract_resource(line))
+
+
     sources_lower = [i.lower() for i in sources]
     targets_lower = [i.lower() for i in targets]
     match_lexicon = []
@@ -290,13 +307,14 @@ def write_inflated_lexicon(mapping, src="runescape", tgt="darkscape", test_size=
 
     # get combined lexicon
     lexicon = gold_lexicon + match_lexicon[1:]
+    random.shuffle(lexicon)
 
     train_lexicon, test_lexicon = lexicon[:-test_size], lexicon[-test_size:]
 
-    with open("../training-monolingual/lexicon/train_lexicon_{}-{}".format(src, tgt), 'wb') as train_dump:
+    with open("training-monolingual/lexicon/train_lexicon_{}-{}".format(src, tgt), 'wb') as train_dump:
         pickle.dump(train_lexicon, train_dump, protocol=pickle.HIGHEST_PROTOCOL)
 
-    with open("../training-monolingual/lexicon/test_lexicon_{}-{}".format(src, tgt), 'wb') as test_dump:
+    with open("training-monolingual/lexicon/test_lexicon_{}-{}".format(src, tgt), 'wb') as test_dump:
         pickle.dump(test_lexicon, test_dump, protocol=pickle.HIGHEST_PROTOCOL)
 
     print("Saved train_lexicon, test_lexicon with sizes:", len(train_lexicon), ",", len(test_lexicon))
@@ -305,12 +323,14 @@ def write_inflated_lexicon(mapping, src="runescape", tgt="darkscape", test_size=
 
 
 if __name__ == "__main__":
-    mapping, onto1, onto2, extension = parse_mapping_from_file(
-        '../gold_mappings/darkscape~oldschoolrunescape~evaluation.xml')
+    mapping, onto1, onto2, extension = parse_mapping_from_file('gold_mappings/darkscape~oldschoolrunescape~evaluation.xml')
     # mapping, onto1, onto2, extension = parse_mapping_from_file('C:\\dev\\dbkwik_extraction\\extraction_docker_ubuntu\\newapproach\\e_gold_mapping_interwiki\\gold\\darkscape~oldschoolrunescape~evaluation.xml')
     # lexicon = write_gold_lexicon(mapping, src="darkscape", tgt="oldschoolrunescape")
 
     # write_to_file('./test.xml', [], ('Dbpedia', 'http://dbpedia.org', 'test', 'bla'))
 
     # keyed vectors need to be created in projections.py first
-    lexicon = write_inflated_lexicon(mapping, src="darkscape", tgt="oldschoolrunescape", window=3)
+    lexicon = write_inflated_lexicon(mapping, src="darkscape", tgt="oldschoolrunescape", window=10)
+
+import random
+
