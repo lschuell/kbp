@@ -34,7 +34,10 @@ def write_random_walks(sub_pred_obj_dict, out_path, number_of_walks_per_resource
                     one_walk.append(choosen_predicate)
                     one_walk.append(choosen_object)
                     current = choosen_object
-                unique_walks.add(tuple(one_walk))
+                if only_unique_walks:
+                    unique_walks.add(tuple(one_walk))
+                else:
+                    unique_walks.append(tuple(one_walk))
 
             for walk in unique_walks:
                 out_file.write(" ".join(walk) + '\n')
@@ -47,7 +50,7 @@ def write_random_walks(sub_pred_obj_dict, out_path, number_of_walks_per_resource
 
 def get_sub_pred_obj_dict(KG="darkscape"):
     sub_pred_obj_dict = dd(lambda: dd(set))
-    with open("../KGs_for_gold_standard/"+KG+"/enwiki-20170801-infobox-properties-redirected.ttl",'r') as src_file:
+    with open("KGs_for_gold_standard/"+KG+"/enwiki-20170801-infobox-properties-redirected.ttl",'r') as src_file:
         for i, line in enumerate(src_file):
             starts = [m.start() for m in re.finditer('<', line)]
             ends = [m.start() for m in re.finditer('>', line)]
@@ -68,6 +71,6 @@ def get_sub_pred_obj_dict(KG="darkscape"):
     return sub_pred_obj_dict
 
 if __name__ == "__main__":
-    KG = "runescape"
+    KG = "oldschoolrunescape"
     sub_pred_obj_dict = get_sub_pred_obj_dict(KG=KG)
-    write_random_walks(sub_pred_obj_dict, "./rwalks/rwalk_"+KG+".txt")
+    write_random_walks(sub_pred_obj_dict, "./rwalks/rwalk_"+KG+".txt", number_of_walks_per_resource = 1000, maximum_length_of_a_walk = 500, only_unique_walks = True)

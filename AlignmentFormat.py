@@ -330,7 +330,7 @@ if __name__ == "__main__":
     # write_to_file('./test.xml', [], ('Dbpedia', 'http://dbpedia.org', 'test', 'bla'))
 
     # keyed vectors need to be created in projections.py first
-    lexicon = write_inflated_lexicon(mapping, src="darkscape", tgt="oldschoolrunescape", window=10)
+    lexicon = write_inflated_lexicon(mapping, src="darkscape", tgt="oldschoolrunescape", size_src=200, size_tgt=200, window=10)
 
-import random
+
 

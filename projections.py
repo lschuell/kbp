@@ -203,8 +203,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Word Translations",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument("--src", default="en", help="Source language")
-    parser.add_argument("--tgt", default="es", help="Target language")
+    parser.add_argument("--src", default="darkscape", help="Source language/KG")
+    parser.add_argument("--tgt", default="oldschoolrunescape", help="Target language/KG")
     parser.add_argument("--size_src", default=200, type=int, help="Dimension of source embedding")
     parser.add_argument("--size_tgt", default=200, type=int, help="Dimension of target embedding")
     parser.add_argument("--ws", default=10, type=int, help="Window size for learning of keyed vectors")
@@ -216,8 +216,8 @@ if __name__ == '__main__':
     parser.add_argument("--save_kv", default=True, type=bool,
                         help="Save keyed vectors when reuse_kv=False (new creation)")
     parser.add_argument("--norm_bf", default=False, type=bool, help="Normalize embeddings before projection")
-    parser.add_argument("--kg", default=False, type=bool, help="Whether to apply on knowledge graph")
-    parser.add_argument("--create_lexicon", default=True, type=bool, help="Whether to create language lexicon")
+    parser.add_argument("--kg", default=True, type=bool, help="Whether to apply on knowledge graph")
+    parser.add_argument("--create_lexicon", default=False, type=bool, help="Whether to create language lexicon")
     parser.add_argument("--sub_lexicon", default=False, type=bool, help="Whether to get sublexicon for comparability with KG for languages")
     parser.add_argument("--get_result", default=True, type=bool, help="Whether to launch training/evaluation")
 
